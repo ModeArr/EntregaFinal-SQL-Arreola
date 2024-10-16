@@ -1,11 +1,8 @@
-#!make
 include .env
 
 COMPOSE_PROJECT_NAME=mysql
 
 SERVICE_NAME=mysql
-HOST=localhost
-PORT=3306
 PASSWORD=${ROOT_PASSWORD}
 DATABASE=${DATABASE_NAME}
 
@@ -23,20 +20,19 @@ BACKUP_FILE="$(BACKUP_DIR)/$(DATABASE)-$(TIMESTAMP).sql"
 FILES := $(wildcard ./objects/*.sql)
 
 
-.PHONY: all up objects population clean roles
+.PHONY: all up objects population clean roles test-db access-db clean-db backup-db show-roles-users
 
-all: up objects population
+all: up objects population roles
 
 up:
-
 	@echo "Create the instance of docker"
 	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d --build
 
 	@echo "Waiting for MySQL to be ready..."
 	bash wait_docker.sh
 
-	@echo "Create the import and run de script"
-	docker exec -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root -e "source $(DATABASE_CREATION);"
+	@echo "Create the database structure"
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "source $(DATABASE_CREATION);"
 	@if [ $$? -eq 0 ]; then \
 		echo "La Base de datos '$(DATABASE_NAME)' fue creada correctamente"; \
 	else \
@@ -47,22 +43,36 @@ objects:
 	@echo "Create objects in database"
 	@for file in $(FILES); do \
 	    echo "Process $$file and add to the database: $(DATABASE_NAME)"; \
-	docker exec -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root -e "source $$file"; \
+	    docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "source $$file"; \
+	    if [ $$? -ne 0 ]; then \
+	        echo "Error al procesar el archivo $$file"; \
+	        exit 1; \
+	    fi; \
 	done
 
 population:
 	@echo "Populate fields"
-	docker exec -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root -e "source $(DATABASE_POPULATION)";
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "source $(DATABASE_POPULATION)";
 	@if [ $$? -eq 0 ]; then \
 		echo "La Base de datos '$(DATABASE_NAME)' fue populada con datos correctamente"; \
 	else \
-		echo "Error al popular con dato la  Base de datos '$(DATABASE_NAME)'"; \
+		echo "Error al popular la Base de datos '$(DATABASE_NAME)'"; \
 	fi
 
 roles:
 	@echo "Create Users and Roles"
-	@cat $(DATABASE_ROLES) | docker exec -i -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root -h $(HOST) $(DATABASE_NAME)
-	@cat $(DATABASE_USERS) | docker exec -i -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root -h $(HOST) $(DATABASE_NAME)
+	@cat $(DATABASE_ROLES) | docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root $(DATABASE_NAME)
+	@cat $(DATABASE_USERS) | docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root $(DATABASE_NAME)
+
+show-roles-users:
+	@echo "Show all users and their roles"
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "\
+		SELECT user AS 'User', host AS 'Host' FROM mysql.user;" | column -t
+	@echo "Privileges for each user:"
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "\
+		SELECT grantee AS 'User', table_schema AS 'Database', privilege_type AS 'Privilege' \
+		FROM information_schema.schema_privileges \
+		WHERE privilege_type IN ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'GRANT OPTION', 'REFERENCES', 'INDEX', 'ALTER', 'CREATE TEMPORARY TABLES', 'LOCK TABLES', 'EXECUTE');" | column -t
 
 test-db:
 	@echo "Testing the tables"
@@ -79,13 +89,13 @@ access-db:
 
 clean-db:
 	@echo "Remove the Database"
-	docker exec -e MYSQL_PWD=$(PASSWORD) mysql mysql -u root --host $(HOST) --port $(PORT) -e "DROP DATABASE IF EXISTS $(DATABASE_NAME);"
-	@echo "Bye"
-	
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "DROP DATABASE IF EXISTS $(DATABASE_NAME);"
+	@echo "La Base de datos '$(DATABASE_NAME)' fue eliminada."
+
 backup-db:
 	@echo "Backup the Database"
 	@mkdir -p $(BACKUP_DIR)
-	docker exec -e MYSQL_PWD=$(PASSWORD) mysql mysqldump -u root --host $(HOST) --port $(PORT) $(DATABASE_NAME) --skip-comments > $(BACKUP_FILE)
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysqldump -u root $(DATABASE_NAME) --skip-comments > $(BACKUP_FILE)
 	@if [ $$? -eq 0 ]; then \
 		echo "Backup de la base de datos '$(DATABASE_NAME)' creado exitosamente en $(BACKUP_FILE)"; \
 	else \

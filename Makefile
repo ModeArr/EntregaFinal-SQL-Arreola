@@ -20,7 +20,7 @@ BACKUP_FILE="$(BACKUP_DIR)/$(DATABASE)-$(TIMESTAMP).sql"
 FILES := $(wildcard ./objects/*.sql)
 
 
-.PHONY: all up objects population clean roles test-db access-db clean-db backup-db show-roles-users
+.PHONY: all up objects population clean roles show-roles-users test-db access-db clean-db backup-db restore-db restore-latest
 
 all: up objects population roles
 
@@ -91,7 +91,7 @@ clean-db:
 	@echo "Remove the Database"
 	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "DROP DATABASE IF EXISTS $(DATABASE_NAME);"
 	@echo "La Base de datos '$(DATABASE_NAME)' fue eliminada."
-
+	
 backup-db:
 	@echo "Backup the Database"
 	@mkdir -p $(BACKUP_DIR)
@@ -100,4 +100,37 @@ backup-db:
 		echo "Backup de la base de datos '$(DATABASE_NAME)' creado exitosamente en $(BACKUP_FILE)"; \
 	else \
 		echo "Error al crear el backup de la base de datos"; \
+	fi
+
+restore-db:
+	@echo "Restoring the Database from backup"
+	@if [ -z "$$FILE" ]; then \
+		echo "Por favor, proporciona el archivo de backup usando FILE=<ruta_del_backup>"; \
+		exit 1; \
+	fi
+	@echo "Creating the database '$(DATABASE_NAME)' if it does not exist"
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "CREATE DATABASE IF NOT EXISTS $(DATABASE_NAME);"
+	@echo "Restoring from $$FILE"
+	docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root $(DATABASE_NAME) < $$FILE
+	@if [ $$? -eq 0 ]; then \
+		echo "La Base de datos '$(DATABASE_NAME)' fue restaurada correctamente desde el backup"; \
+	else \
+		echo "Error al restaurar la base de datos desde el backup"; \
+	fi
+
+restore-latest:
+	@echo "Restoring the most recent backup"
+	@LATEST_BACKUP=$$(ls -t $(BACKUP_DIR)/*.sql | head -n 1); \
+	if [ -z "$$LATEST_BACKUP" ]; then \
+		echo "No hay backups disponibles en la carpeta $(BACKUP_DIR)"; \
+		exit 1; \
+	fi; \
+	echo "Creating the database '$(DATABASE_NAME)' if it does not exist"; \
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -e "CREATE DATABASE IF NOT EXISTS $(DATABASE_NAME);"; \
+	echo "Restoring from $$LATEST_BACKUP"; \
+	docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root $(DATABASE_NAME) < $$LATEST_BACKUP; \
+	if [ $$? -eq 0 ]; then \
+		echo "La Base de datos '$(DATABASE_NAME)' fue restaurada correctamente desde el backup más reciente"; \
+	else \
+		echo "Error al restaurar la base de datos desde el backup más reciente"; \
 	fi

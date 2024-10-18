@@ -11,6 +11,7 @@ Docente: Anderson Michel Torres
 
 ### **Consignas:**
 - El documento debe contener:
+    - Ejecución del proyecto
     - Introducción
     - Objetivo
     - Situación problemática
@@ -23,6 +24,129 @@ Docente: Anderson Michel Torres
     - Triggers
 
 ---
+## Ejecución del Proyecto
+
+El `Makefile` proporciona una serie de comandos para gestionar la base de datos MySQL en un entorno Docker. Incluye comandos para crear, popular y restaurar la base de datos, así como para hacer copias de seguridad y probar la estructura de la base de datos.
+
+### Requisitos Previos
+- **Docker**: Asegúrate de tener Docker y Docker Compose instalados.
+- **Make**: Instala Make en tu sistema (generalmente viene preinstalado en macOS y Linux, pero en Windows puede requerir instalación adicional).
+
+### Pasos para Ejecutar el Proyecto
+
+#### macOS / Linux
+1. Clona el repositorio en tu máquina local.
+2. Navega al directorio del proyecto:
+   ```bash
+   cd nombre-del-proyecto
+   ```
+3. Ejecuta el comando principal:
+   ```bash
+   make
+   ```
+   Este comando levanta el contenedor Docker, crea la estructura de la base de datos, y la llena con datos iniciales.
+
+#### Windows
+1. Clona el repositorio en tu máquina local.
+2. Instala `Make` usando Chocolatey:
+   ```bash
+   choco install make
+   ```
+3. Navega al directorio del proyecto:
+   ```bash
+   cd nombre-del-proyecto
+   ```
+4. Ejecuta el comando principal:
+   ```bash
+   make
+   ```
+   Asegúrate de tener Docker Desktop ejecutándose en segundo plano.
+
+## Comandos
+
+### `make` (Comando Principal)
+Levanta el contenedor Docker, construye la imagen si es necesario, y ejecuta el script que inicializa la estructura de la base de datos, crea objetos, y la llena con datos iniciales. Este ejecutara los comandos: `make up`, `make objects`, `make population` y `make roles`; esto sin necesidad de ejecutarlos todos uno tras otro.
+
+  ```bash
+  make
+  ```
+
+### `make up`
+Inicia y configura el contenedor Docker de MySQL, construyendo la imagen si es necesario y esperando a que el servicio esté disponible antes de ejecutar el script que inicializa la estructura de la base de datos.
+
+  ```bash
+  make up
+  ```
+
+### `make objects`
+Recorre todos los archivos SQL en la carpeta `./objects` y los ejecuta dentro de la base de datos para crear todos los objetos necesarios, como tablas, vistas, y procedimientos almacenados.
+
+  ```bash
+  make objects
+  ```
+
+### `make population`
+Ejecuta el script `./structure/population.sql` para llenar las tablas de la base de datos con datos iniciales o de ejemplo.
+
+  ```bash
+  make population
+  ```
+
+### `make roles`
+Configura roles y usuarios en la base de datos utilizando los scripts `roles.sql` y `users.sql` localizados en la carpeta `./roles`. Permite gestionar los permisos y los accesos a las tablas y procedimientos de manera estructurada.
+
+  ```bash
+  make roles
+  ```
+
+### `make show-roles-users`
+Muestra todos los roles y usuarios de la base de datos en un formato tabular para facilitar la visualización de las configuraciones y permisos de los usuarios.
+
+  ```bash
+  make show-roles-users
+  ```
+
+### `make test-db`
+Revisa y muestra las primeras 5 filas de cada tabla de la base de datos, permitiendo una rápida validación de la estructura y el contenido de las tablas.
+
+  ```bash
+  make test-db
+  ```
+
+### `make access-db`
+Accede al cliente MySQL en modo interactivo dentro del contenedor Docker, permitiendo ejecutar consultas y comandos directamente en la base de datos.
+
+  ```bash
+  make access-db
+  ```
+
+### `make clean-db`
+Elimina la base de datos especificada en las variables de entorno, útil para limpiar el entorno de pruebas o reiniciar el estado de la base de datos.
+
+  ```bash
+  make clean-db
+  ```
+
+### `make backup-db`
+Genera una copia de seguridad de la base de datos y la guarda en la carpeta `./backups` con un nombre que incluye la fecha y la hora de creación, para facilitar la identificación y restauración en el futuro.
+
+  ```bash
+  make backup-db
+  ```
+
+### `make restore-db`
+Restaura la base de datos utilizando un archivo de respaldo especificado. El archivo debe estar ubicado en la carpeta `./backups`.
+
+  ```bash
+  make restore-db BACKUP_FILE=./backups/tu-backup.sql
+  ```
+
+### `make restore-latest`
+Restaura la base de datos utilizando el archivo de respaldo más reciente ubicado en la carpeta `./backups`. Esta opción es útil para restaurar rápidamente la versión más actual sin necesidad de especificar un archivo en particular.
+
+  ```bash
+  make restore-latest
+  ```
 
 ## Introducción
 Se busca hacer una base de datos relacional para un ecommerce, que permita hacer compras de manera eficiente y dinámica; esto mediante un carrito de compras.

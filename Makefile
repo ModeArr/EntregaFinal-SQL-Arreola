@@ -83,6 +83,9 @@ test-db:
 		echo "----------------------------------------------"; \
 	done
 
+check-logs:
+	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root -N -B -e "USE $(DATABASE_NAME); SELECT * FROM system_logs;"; \
+
 access-db:
 	@echo "Access to db-client"
 	docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql -u root

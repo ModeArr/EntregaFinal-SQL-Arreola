@@ -163,6 +163,20 @@ CREATE TABLE IF NOT EXISTS `payment_providers` (
 );
 
 -- -----------------------------------------------------
+-- Table `ecommerce`.`system_logs`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `system_logs` (
+    `id_log` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `log_type` ENUM('INFO', 'WARNING', 'ERROR', 'DEBUG') NOT NULL,
+    `message` VARCHAR(255) NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `user_id` INT NULL,
+    `table_name` VARCHAR(50) NULL,
+    `operation` ENUM('INSERT', 'UPDATE', 'DELETE') NULL
+);
+
+-- -----------------------------------------------------
 -- Foreign Key Constraints
 -- -----------------------------------------------------
 ALTER TABLE `product`

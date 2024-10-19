@@ -123,4 +123,16 @@ BEGIN
     VALUES (p_user_id, p_address_line1, p_address_line2, p_city, p_postal_code, p_country, p_telephone, p_mobile);
 END //
 
+CREATE PROCEDURE `log_event` (
+    IN p_log_type ENUM('INFO', 'WARNING', 'ERROR', 'DEBUG'),
+    IN p_message VARCHAR(255),
+    IN p_user_id INT,
+    IN p_table_name VARCHAR(50),
+    IN p_operation ENUM('INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT')
+)
+BEGIN
+    INSERT INTO `system_logs` (`log_type`, `message`, `user_id`, `table_name`, `operation`)
+    VALUES (p_log_type, p_message, p_user_id, p_table_name, p_operation);
+END //
+
 DELIMITER ;

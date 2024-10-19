@@ -388,3 +388,117 @@ BEGIN
   END IF;
 END //
 DELIMITER ;
+
+-- Triggers de logs
+
+DELIMITER //
+CREATE TRIGGER log_insert_product_inventory
+AFTER INSERT ON product_inventory
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'INFO', 
+        CONCAT('Product inventory added: ID ', NEW.id_product_inventory, ', Quantity: ', NEW.quantity), 
+        NULL, 
+        'product_inventory', 
+        'INSERT'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_update_discount
+AFTER UPDATE ON discount
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'INFO', 
+        CONCAT('Discount updated: ID ', OLD.id_discount, ', Name: ', OLD.name, ' to ', NEW.name), 
+        NULL, 
+        'discount', 
+        'UPDATE'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_delete_product_category
+AFTER DELETE ON product_category
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'WARNING', 
+        CONCAT('Product category deleted: ID ', OLD.id_product_category, ', Name: ', OLD.name), 
+        NULL, 
+        'product_category', 
+        'DELETE'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_insert_product
+AFTER INSERT ON product
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'INFO', 
+        CONCAT('Product inserted: ID ', NEW.id_product, ', Name: ', NEW.name, ', SKU: ', NEW.SKU), 
+        NULL, 
+        'product', 
+        'INSERT'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_update_order_details
+AFTER UPDATE ON order_details
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'INFO', 
+        CONCAT('Order details updated: ID ', OLD.id_order_details, ', Total: ', OLD.total, ' to ', NEW.total), 
+        NULL, 
+        'order_details', 
+        'UPDATE'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_delete_user
+AFTER DELETE ON user
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'WARNING', 
+        CONCAT('User deleted: ID ', OLD.id_user, ', Username: ', OLD.username), 
+        OLD.id_user, 
+        'user', 
+        'DELETE'
+    );
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER log_insert_payment_details
+AFTER INSERT ON payment_details
+FOR EACH ROW
+BEGIN
+    CALL log_event(
+        'INFO', 
+        CONCAT('Payment details added: ID ', NEW.id_payment_details, ', Amount: ', NEW.amount), 
+        NULL, 
+        'payment_details', 
+        'INSERT'
+    );
+END;
+//
+DELIMITER ;

@@ -11,17 +11,16 @@ Docente: Anderson Michel Torres
 
 ### **Consignas:**
 - El documento debe contener:
-    - Ejecución del proyecto
-    - Introducción
-    - Objetivo
-    - Situación problemática
-    - Modelo de negocio
-    - Diagrama de entidad relación
-    - Listado de tablas con descripción de estructura (columna,descripción, tipo de datos, tipo de clave)
-    - Vistas
-    - Funciones
-    - Stored Procedures
-    - Triggers
+    - [Ejecución del proyecto](#ejecución-del-proyecto)
+    - [Introducción](#introducción)
+    - [Objetivo](#objetivo)
+    - [Modelo de negocio](#modelo-de-negocio)
+    - [Diagrama de entidad relación](#diagrama-entidad-relación)
+    - [Listado de tablas con descripción](#listado-de-tablas-y-descripción)
+    - [Vistas](#vistas)
+    - [Funciones](#funciones)
+    - [Stored Procedures](#stored-procedures)
+    - [Triggers](#triggers)
 
 ---
 ## Ejecución del Proyecto
@@ -163,7 +162,7 @@ Proveer de un sistema simple que permita realizar compras y asi mismo mantener d
 
 4. **Registro de ventas**: Necesitamos un sistema que pueda registrar de manera detallada cada compra hecha y todos sus detalles y que esta sea fácil para el departamento de ventas poder verificarla a fondo.
 
-## Diagrama entidad relación (DER)
+## Diagrama entidad relación
 ![Diagrama Entidad Relacion](https://github.com/user-attachments/assets/c0e5c876-79c9-44ee-9865-015973529c96)
 
 ## Listado de tablas y descripción

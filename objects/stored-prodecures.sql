@@ -1,7 +1,19 @@
 USE `ecommerce`;
 
 DELIMITER //
--- Agregar un nuevo producto
+
+CREATE PROCEDURE log_event (
+    IN p_log_type ENUM('INFO', 'WARNING', 'ERROR', 'DEBUG'),
+    IN p_message VARCHAR(255),
+    IN p_user_id INT,
+    IN p_table_name VARCHAR(50),
+    IN p_operation ENUM('INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT')
+)
+BEGIN
+    INSERT INTO system_logs (log_type, message, user_id, table_name, operation)
+    VALUES (p_log_type, p_message, p_user_id, p_table_name, p_operation);
+END //
+
 CREATE PROCEDURE add_product (
     IN p_name VARCHAR(100),
     IN p_description VARCHAR(300),
@@ -9,82 +21,152 @@ CREATE PROCEDURE add_product (
     IN p_category_id INT,
     IN p_quantity INT UNSIGNED,
     IN p_price DECIMAL(10,2),
-    IN p_discount_id INT
+    IN p_discount_id INT,
+    IN p_user_id INT
 )
 BEGIN
-    INSERT INTO product_inventory (quantity)
-    VALUES (p_quantity);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al agregar producto', p_user_id, 'product', 'INSERT');
+    END;
+
+    START TRANSACTION;
+
+
+    INSERT INTO product_inventory (quantity, created_at)
+    VALUES (p_quantity, NOW());
 
     SET @inventory_id = LAST_INSERT_ID();
 
-    INSERT INTO product (name, description, SKU, category_id, inventory_id, price, discount_id)
-    VALUES (p_name, p_description, p_SKU, p_category_id, @inventory_id, p_price, p_discount_id);
+
+    INSERT INTO product (name, description, SKU, category_id, inventory_id, price, discount_id, created_at)
+    VALUES (p_name, p_description, p_SKU, p_category_id, @inventory_id, p_price, p_discount_id, NOW());
+
+
+    CALL log_event('INFO', 'Producto agregado', p_user_id, 'product', 'INSERT');
+
+    COMMIT;
 END; //
 
--- Actualizar inventario de un producto
 CREATE PROCEDURE update_product_inventory (
     IN p_inventory_id INT,
-    IN p_quantity INT
+    IN p_quantity INT,
+    IN p_user_id INT
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al actualizar inventario', p_user_id, 'product_inventory', 'UPDATE');
+    END;
+
+    START TRANSACTION;
+
     UPDATE product_inventory 
-    SET quantity = p_quantity
+    SET quantity = p_quantity, modified_at = NOW()
     WHERE id_product_inventory = p_inventory_id;
-END //
 
--- Crear una nueva orden
-CREATE PROCEDURE create_order (
-    IN p_user_id INT,
-    IN p_total DECIMAL(10,2)
-)
-BEGIN
-    INSERT INTO order_details (user_id, total)
-    VALUES (p_user_id, p_total);
-END //
 
--- Agregar detalles de pago
+    CALL log_event('INFO', 'Inventario actualizado', p_user_id, 'product_inventory', 'UPDATE');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE add_payment_details (
     IN p_amount DECIMAL(10,2),
-    IN p_provider VARCHAR(45),
-    IN p_status ENUM('PENDING', 'COMPLETED', 'FAILED')
+    IN p_provider_id INT,
+    IN p_status ENUM('PENDING', 'COMPLETED', 'FAILED'),
+    IN p_user_id INT
 )
 BEGIN
-    INSERT INTO payment_details (amount, provider, status)
-    VALUES (p_amount, p_provider, p_status);
-END //
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al agregar detalles de pago', p_user_id, 'payment_details', 'INSERT');
+    END;
 
--- Agregar ítems a una orden
+    START TRANSACTION;
+
+    INSERT INTO payment_details (amount, provider_id, status, created_at)
+    VALUES (p_amount, p_provider_id, p_status, NOW());
+
+
+    CALL log_event('INFO', 'Detalles de pago agregados', p_user_id, 'payment_details', 'INSERT');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE add_order_items (
     IN p_order_id INT,
-    IN p_product_id INT
+    IN p_product_id INT,
+    IN p_quantity INT UNSIGNED,
+    IN p_user_id INT
 )
 BEGIN
-    INSERT INTO order_items (order_id, product_id)
-    VALUES (p_order_id, p_product_id);
-END //
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al agregar ítems a la orden', p_user_id, 'order_items', 'INSERT');
+    END;
 
--- Crear una sesión de compra
+    START TRANSACTION;
+
+    INSERT INTO order_items (order_id, product_id, quantity, created_at)
+    VALUES (p_order_id, p_product_id, p_quantity, NOW());
+
+
+    CALL log_event('INFO', 'Ítems agregados a la orden', p_user_id, 'order_items', 'INSERT');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE create_shopping_session (
     IN p_user_id INT,
     IN p_total DECIMAL(10,2)
 )
 BEGIN
-    INSERT INTO shopping_session (user_id, total)
-    VALUES (p_user_id, p_total);
-END //
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al crear sesión de compra', p_user_id, 'shopping_session', 'INSERT');
+    END;
 
--- Actualizar estado de pago
+    START TRANSACTION;
+
+    INSERT INTO shopping_session (user_id, total, created_at)
+    VALUES (p_user_id, p_total, NOW());
+
+
+    CALL log_event('INFO', 'Sesión de compra creada', p_user_id, 'shopping_session', 'INSERT');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE update_payment_status (
     IN p_payment_id INT,
-    IN p_status ENUM('PENDING', 'COMPLETED', 'FAILED')
+    IN p_status ENUM('PENDING', 'COMPLETED', 'FAILED'),
+    IN p_user_id INT
 )
 BEGIN
-    UPDATE payment_details
-    SET status = p_status
-    WHERE id_payment_details = p_payment_id;
-END //
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al actualizar estado de pago', p_user_id, 'payment_details', 'UPDATE');
+    END;
 
--- Actualizar datos de usuario
+    START TRANSACTION;
+
+    UPDATE payment_details
+    SET status = p_status, modified_at = NOW()
+    WHERE id_payment_details = p_payment_id;
+
+
+    CALL log_event('INFO', 'Estado de pago actualizado', p_user_id, 'payment_details', 'UPDATE');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE update_user (
     IN p_user_id INT,
     IN p_first_name VARCHAR(45),
@@ -93,21 +175,24 @@ CREATE PROCEDURE update_user (
     IN p_telephone VARCHAR(15)
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al actualizar datos de usuario', p_user_id, 'user', 'UPDATE');
+    END;
+
+    START TRANSACTION;
+
     UPDATE user 
-    SET first_name = p_first_name, last_name = p_last_name, address = p_address, telephone = p_telephone
+    SET first_name = p_first_name, last_name = p_last_name, address = p_address, telephone = p_telephone, modified_at = NOW()
     WHERE id_user = p_user_id;
-END //
 
--- Ver productos disponibles
-CREATE PROCEDURE get_available_products ()
-BEGIN
-    SELECT p.name, p.description, p.SKU, p.price, pi.quantity
-    FROM product p
-    INNER JOIN product_inventory pi ON p.inventory_id = pi.id_product_inventory
-    WHERE pi.quantity > 0;
-END //
 
--- Agregar dirección de usuario
+    CALL log_event('INFO', 'Datos de usuario actualizados', p_user_id, 'user', 'UPDATE');
+
+    COMMIT;
+END; //
+
 CREATE PROCEDURE add_user_address (
     IN p_user_id INT,
     IN p_address_line1 VARCHAR(60),
@@ -119,20 +204,29 @@ CREATE PROCEDURE add_user_address (
     IN p_mobile VARCHAR(15)
 )
 BEGIN
-    INSERT INTO user_address (user_id, address_line1, address_line2, city, postal_code, country, telephone, mobile)
-    VALUES (p_user_id, p_address_line1, p_address_line2, p_city, p_postal_code, p_country, p_telephone, p_mobile);
-END //
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        CALL log_event('ERROR', 'Error al agregar dirección de usuario', p_user_id, 'user_address', 'INSERT');
+    END;
 
-CREATE PROCEDURE `log_event` (
-    IN p_log_type ENUM('INFO', 'WARNING', 'ERROR', 'DEBUG'),
-    IN p_message VARCHAR(255),
-    IN p_user_id INT,
-    IN p_table_name VARCHAR(50),
-    IN p_operation ENUM('INSERT', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT')
-)
+    START TRANSACTION;
+
+    INSERT INTO user_address (user_id, address_line1, address_line2, city, postal_code, country, telephone, mobile, created_at)
+    VALUES (p_user_id, p_address_line1, p_address_line2, p_city, p_postal_code, p_country, p_telephone, p_mobile, NOW());
+
+
+    CALL log_event('INFO', 'Dirección de usuario agregada', p_user_id, 'user_address', 'INSERT');
+
+    COMMIT;
+END; //
+
+CREATE PROCEDURE get_available_products ()
 BEGIN
-    INSERT INTO `system_logs` (`log_type`, `message`, `user_id`, `table_name`, `operation`)
-    VALUES (p_log_type, p_message, p_user_id, p_table_name, p_operation);
+    SELECT p.name, p.description, p.SKU, p.price, pi.quantity
+    FROM product p
+    INNER JOIN product_inventory pi ON p.inventory_id = pi.id_product_inventory
+    WHERE pi.quantity > 0;
 END //
 
 DELIMITER ;

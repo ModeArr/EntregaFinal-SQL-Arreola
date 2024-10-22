@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS `product` (
   `category_id` INT NOT NULL,
   `inventory_id` INT NOT NULL,
   `price` DECIMAL(10,2) NOT NULL,
-  `discount_id` INT NOT NULL DEFAULT 0,
+  `discount_id` INT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL,
   `modified_at` DATETIME NULL,
   `deleted_at` DATETIME NULL);

@@ -20,7 +20,7 @@ BACKUP_FILE="$(BACKUP_DIR)/$(DATABASE)-$(TIMESTAMP).sql"
 FILES := $(wildcard ./objects/*.sql)
 
 
-.PHONY: all up objects population clean roles show-roles-users test-db access-db clean-db backup-db restore-db restore-latest
+.PHONY: all up objects population clean roles show-roles-users test-db access-db clean-db backup-db restore-db restore-latest test-procedures
 
 all: up objects population roles
 
@@ -137,3 +137,10 @@ restore-latest:
 	else \
 		echo "Error al restaurar la base de datos desde el backup más reciente"; \
 	fi
+
+test-procedures:
+	@echo "Testing stored procedures"
+	@echo "Executing tests and showing results:"
+	@docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) < ./testing-procedures.sql
+	@echo "\nTest Results from test_results table:"
+	@docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) -e "SELECT * FROM test_results;"

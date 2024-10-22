@@ -33,15 +33,13 @@ BEGIN
 
     START TRANSACTION;
 
-
-    INSERT INTO product_inventory (quantity, created_at)
-    VALUES (p_quantity, NOW());
+    INSERT INTO product_inventory (quantity)
+    VALUES (p_quantity);
 
     SET @inventory_id = LAST_INSERT_ID();
 
-
-    INSERT INTO product (name, description, SKU, category_id, inventory_id, price, discount_id, created_at)
-    VALUES (p_name, p_description, p_SKU, p_category_id, @inventory_id, p_price, p_discount_id, NOW());
+    INSERT INTO product (name, description, SKU, category_id, inventory_id, price, discount_id)
+    VALUES (p_name, p_description, p_SKU, p_category_id, @inventory_id, p_price, p_discount_id);
 
 
     CALL log_event('INFO', 'Producto agregado', p_user_id, 'product', 'INSERT');
@@ -64,7 +62,7 @@ BEGIN
     START TRANSACTION;
 
     UPDATE product_inventory 
-    SET quantity = p_quantity, modified_at = NOW()
+    SET quantity = p_quantity
     WHERE id_product_inventory = p_inventory_id;
 
 
@@ -88,8 +86,8 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO payment_details (amount, provider_id, status, created_at)
-    VALUES (p_amount, p_provider_id, p_status, NOW());
+    INSERT INTO payment_details (amount, provider_id, status)
+    VALUES (p_amount, p_provider_id, p_status);
 
 
     CALL log_event('INFO', 'Detalles de pago agregados', p_user_id, 'payment_details', 'INSERT');
@@ -112,8 +110,8 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO order_items (order_id, product_id, quantity, created_at)
-    VALUES (p_order_id, p_product_id, p_quantity, NOW());
+    INSERT INTO order_items (order_id, product_id, quantity)
+    VALUES (p_order_id, p_product_id, p_quantity);
 
 
     CALL log_event('INFO', 'Ítems agregados a la orden', p_user_id, 'order_items', 'INSERT');
@@ -134,8 +132,8 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO shopping_session (user_id, total, created_at)
-    VALUES (p_user_id, p_total, NOW());
+    INSERT INTO shopping_session (user_id, total)
+    VALUES (p_user_id, p_total);
 
 
     CALL log_event('INFO', 'Sesión de compra creada', p_user_id, 'shopping_session', 'INSERT');
@@ -158,7 +156,7 @@ BEGIN
     START TRANSACTION;
 
     UPDATE payment_details
-    SET status = p_status, modified_at = NOW()
+    SET status = p_status
     WHERE id_payment_details = p_payment_id;
 
 
@@ -184,7 +182,7 @@ BEGIN
     START TRANSACTION;
 
     UPDATE user 
-    SET first_name = p_first_name, last_name = p_last_name, address = p_address, telephone = p_telephone, modified_at = NOW()
+    SET first_name = p_first_name, last_name = p_last_name, address = p_address, telephone = p_telephone
     WHERE id_user = p_user_id;
 
 
@@ -212,8 +210,8 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO user_address (user_id, address_line1, address_line2, city, postal_code, country, telephone, mobile, created_at)
-    VALUES (p_user_id, p_address_line1, p_address_line2, p_city, p_postal_code, p_country, p_telephone, p_mobile, NOW());
+    INSERT INTO user_address (user_id, address_line1, address_line2, city, postal_code, country, telephone, mobile)
+    VALUES (p_user_id, p_address_line1, p_address_line2, p_city, p_postal_code, p_country, p_telephone, p_mobile);
 
 
     CALL log_event('INFO', 'Dirección de usuario agregada', p_user_id, 'user_address', 'INSERT');

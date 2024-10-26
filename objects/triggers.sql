@@ -1,7 +1,8 @@
 USE `ecommerce`;
+
 -- -----------------------------------------------------
 -- Triggers de modificacion update
--- -----------------------------------------------------
+-- ----------------------------------------------------
 
 -- Trigger para la tabla `product_inventory`
 DELIMITER //

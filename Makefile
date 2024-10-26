@@ -141,6 +141,6 @@ restore-latest:
 test-procedures:
 	@echo "Testing stored procedures"
 	@echo "Executing tests and showing results:"
-	@docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) < ./testing-procedures.sql
+	docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) < ./testing-procedures.sql
 	@echo "\nTest Results from test_results table:"
-	@docker exec -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) -e "SELECT * FROM test_results;"
+	docker exec -i -e MYSQL_PWD=$(PASSWORD) $(SERVICE_NAME) mysql --table -u root $(DATABASE_NAME) -e "CALL run_all_tests()"
